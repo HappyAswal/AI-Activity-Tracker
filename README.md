@@ -50,15 +50,48 @@ Traditional single-stage classifiers struggle with context-dependent content lik
 
 Our two-stage system solves this:
 
+```
+User Activity
+     ↓
+┌────────────────────────────────────┐
+│  STAGE 1: Primary Classification  │
+│  TF-IDF + Logistic Regression      │
+│                                    │
+│  5 Categories:                     │
+│  • Productivity                    │
+│  • Entertainment                   │
+│  • Social Media                    │
+│  • Communication                   │
+│  • Other                           │
+└────────────────────────────────────┘
+     ↓
+Is it YouTube/Video content?
+     ↓ Yes
+┌────────────────────────────────────┐
+│  STAGE 2: Content Refinement       │
+│  TF-IDF + SVM                      │
+│                                    │
+│  2 Categories:                     │
+│  • Productive (tutorials, courses) │
+│  • Entertainment (music, gaming)   │
+└────────────────────────────────────┘
+     ↓
+Final Category
+```
+
 **Stage 1** (TF-IDF + Logistic Regression)
 - Classifies into 5 main categories
 - Handles app-level and platform-level classification
 - 1000 TF-IDF features with 1-3 n-grams
+- Multinomial solver with balanced class weights
+- Fast training (1-5 seconds) and prediction (<1ms)
 
 **Stage 2** (TF-IDF + SVM)
 - Refines video/YouTube content
 - Binary classification: Productive vs Entertainment
+- 800 TF-IDF features with linear kernel
 - Only runs when needed (YouTube, Vimeo, etc.)
+- Prediction time: <2ms total (both stages)
 
 ### Training the Models
 
@@ -76,15 +109,51 @@ python compare_models.py
 **Requirements:**
 - Stage 1: Minimum 30 samples (recommended: 100+)
 - Stage 2: Minimum 20 video samples (recommended: 50+)
+- Run tracker for 2-3 hours minimum before training
+
+**What happens during training:**
+```
+[STAGE 1] Collecting training data...
+Stage 1 data collected: 156 unique activities
+
+Stage 1 Category Distribution:
+  Productivity          78 (50.0%) ████████████████████████
+  Entertainment         42 (26.9%) █████████████
+  Social Media          18 (11.5%) █████
+  Communication         12 ( 7.7%) ███
+  Other                  6 ( 3.8%) █
+
+[STAGE 1] Training model...
+✅ Stage 1 training complete!
+
+[STAGE 2] Training model...
+✅ Stage 2 training complete!
+```
 
 ### Expected Accuracy
 
-| Training Data | Accuracy |
-|---------------|----------|
-| 30-50 samples | 70-80% |
-| 100-200 samples | 85-90% |
-| 500+ samples | 90-95% |
-| 1000+ samples | 95%+ |
+| Training Data | Stage 1 | Stage 2 | Overall |
+|---------------|---------|---------|---------|
+| 30-50 samples | 70-80% | N/A | 70-80% |
+| 100-200 samples | 85-90% | 75-85% | 85-90% |
+| 500+ samples | 90-95% | 85-95% | 90-95% |
+| 1000+ samples | 95%+ | 90%+ | 95%+ |
+
+### Confidence Thresholds
+
+The system uses confidence scoring to decide when to use ML vs rule-based fallback:
+
+```python
+# Stage 1: If confidence < 0.4, fallback to rules
+if stage1_confidence < 0.4:
+    return rule_based_categorize()
+
+# Stage 2: If confidence > 0.5, use Stage 2 prediction
+if stage2_confidence > 0.5:
+    return stage2_prediction
+else:
+    return stage1_prediction
+```
 
 ## Project Structure
 
@@ -181,32 +250,121 @@ if stage1_confidence < 0.4:  # Adjust threshold
     return rule_based_categorize()
 ```
 
+### Hyperparameter Tuning
+
+**Increase TF-IDF features for complex patterns:**
+```python
+TfidfVectorizer(
+    max_features=2000,  # Increase from 1000
+    ngram_range=(1, 4),  # Add 4-grams
+)
+```
+
+**Adjust confidence thresholds for stricter predictions:**
+```python
+if stage1_confidence < 0.5:  # Increase from 0.4
+    return rule_based_categorize()
+```
+
+**Change SVM kernel for non-linear patterns:**
+```python
+SVC(
+    kernel='rbf',  # Change from 'linear'
+    gamma='scale'
+)
+```
+
 ### Add Custom Keywords
 Edit `categorizer.py` to add your specific apps/sites to the keyword lists.
 
 ## Documentation
 
-- `TWO_STAGE_ML_GUIDE.md` - Comprehensive ML system guide
-- `fix_classification.md` - Troubleshooting classification issues
+- `README.md` - Complete project documentation (this file)
+
+## Troubleshooting
+
+### Low ML Accuracy
+**Causes:** Not enough training data, imbalanced categories, poor quality labels
+
+**Solutions:**
+1. Collect more data (run tracker longer)
+2. Use labeling dashboard to correct mistakes
+3. Ensure diverse activities across all categories
+
+### Stage 2 Not Training
+**Cause:** Not enough video/YouTube content
+
+**Solution:**
+- Watch some YouTube tutorials while tracker is running
+- Use labeling dashboard to manually add video entries
+- Stage 1 will still work without Stage 2
+
+### Model Not Loading
+**Cause:** Model files corrupted or missing
+
+**Solution:**
+```bash
+python train_model.py  # Retrain from scratch
+```
 
 ## Technical Details
 
 ### Stage 1: Logistic Regression
 - Multi-class classification (5 categories)
-- TF-IDF features with 1-3 n-grams
-- Balanced class weights
-- Multinomial solver
+- TF-IDF features: 1000 max features, 1-3 n-grams
+- Balanced class weights for imbalanced data
+- Multinomial solver (lbfgs)
+- Sublinear TF scaling
+- Max DF 0.8 to filter common words
+
+**Configuration:**
+```python
+TfidfVectorizer(
+    max_features=1000,
+    ngram_range=(1, 3),
+    min_df=2,
+    max_df=0.8,
+    sublinear_tf=True
+)
+
+LogisticRegression(
+    max_iter=1000,
+    multi_class='multinomial',
+    solver='lbfgs',
+    class_weight='balanced'
+)
+```
 
 ### Stage 2: SVM
 - Binary classification (Productive vs Entertainment)
-- Linear kernel for speed
+- TF-IDF features: 800 max features, 1-3 n-grams
+- Linear kernel for speed and text data
 - Probability estimates enabled
-- Only runs for video content
+- Balanced class weights
+
+**Configuration:**
+```python
+TfidfVectorizer(
+    max_features=800,
+    ngram_range=(1, 3),
+    min_df=2,
+    max_df=0.8,
+    sublinear_tf=True
+)
+
+SVC(
+    kernel='linear',
+    C=1.0,
+    class_weight='balanced',
+    probability=True
+)
+```
 
 ### Performance
-- Training: 1-5 seconds
-- Prediction: <2ms per activity
+- Training: 1-5 seconds (Stage 1), 0.5-2 seconds (Stage 2)
+- Prediction: <1ms (Stage 1 only), <2ms (both stages)
 - Memory: ~3MB for both models
+- CPU overhead: <1%
 
 ## Privacy
 
