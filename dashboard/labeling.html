@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Data Labeling</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
+        .activity-item {
+            cursor: default;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1 class="title">
+                    <span class="icon">🏷️</span>
+                    Data Labeling
+                </h1>
+                <p class="subtitle">Bulk correct ML training data</p>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <input type="date" id="datePicker" class="date-picker" onchange="loadLabelingData()">
+                <button class="refresh-btn" onclick="window.location.href='/'">
+                    Back to Dashboard
+                </button>
+                <div class="refresh-btn" style="background: var(--productivity); color: white;" onclick="retrainAI()">
+                    <span class="refresh-icon">🧠</span>
+                    Retrain AI & Sync
+                </div>
+                <div class="refresh-btn" onclick="loadLabelingData()">
+                    <span class="refresh-icon">↻</span>
+                    Refresh
+                </div>
+            </div>
+        </header>
+
+        <div class="recent-activity">
+            <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                These are unique app and window title combinations grouped together. Correcting one row will
+                automatically update all isolated 5-second instances in the database.
+            </p>
+            <div class="activity-list" id="labeling-list">
+                <div class="loading">Loading grouped data...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/labeling.js?v=2"></script>
+</body>
+
+</html>

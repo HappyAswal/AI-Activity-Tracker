@@ -1,0 +1,10 @@
+*.db
+*.pyc
+__pycache__/
+.pytest_cache/
+venv/
+.env
+*.log
+models/*.pkl
+!models/.gitkeep
+debug_facebook.py

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Activity Tracker Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1 class="title">
+                    <span class="icon">🎯</span>
+                    AI Activity Tracker
+                </h1>
+                <p class="subtitle">Your focus companion</p>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <input type="date" id="datePicker" class="date-picker" onchange="loadDashboard()">
+                <button class="refresh-btn" style="background: var(--surface-light);"
+                    onclick="window.location.href='/labeling'">
+                    🏷️ Label Data
+                </button>
+                <div class="refresh-btn" onclick="loadDashboard()">
+                    <span class="refresh-icon">↻</span>
+                    Refresh
+                </div>
+            </div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card focused">
+                <div class="stat-icon">💼</div>
+                <div class="stat-content">
+                    <div class="stat-label">Focused Time</div>
+                    <div class="stat-value" id="focused-hours">0.0h</div>
+                </div>
+            </div>
+
+            <div class="stat-card distracted">
+                <div class="stat-icon">📱</div>
+                <div class="stat-content">
+                    <div class="stat-label">Distracted Time</div>
+                    <div class="stat-value" id="distracted-hours">0.0h</div>
+                </div>
+            </div>
+
+            <div class="stat-card idle">
+                <div class="stat-icon">💤</div>
+                <div class="stat-content">
+                    <div class="stat-label">Idle Time</div>
+                    <div class="stat-value" id="idle-hours">0.0h</div>
+                </div>
+            </div>
+
+            <div class="stat-card total">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Tracked</div>
+                    <div class="stat-value" id="total-hours">0.0h</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h2 class="chart-title">Activity Distribution</h2>
+                <canvas id="pieChart"></canvas>
+            </div>
+
+            <div class="chart-card wide">
+                <h2 class="chart-title">Hourly Timeline</h2>
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+
+        <div class="recent-activity">
+            <h2 class="section-title">Recent Activity</h2>
+            <div class="activity-list" id="activity-list">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/dashboard.js"></script>
+</body>
+
+</html>
