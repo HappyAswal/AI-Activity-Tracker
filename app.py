@@ -182,42 +182,6 @@ async def get_timeline(date: Optional[str] = ""):
     finally:
         conn.close()
 
-@app.get("/api/insights")
-async def get_insights():
-    """
-    Get AI-powered insights and predictions.
-    
-    Returns:
-        Dictionary with focus score, peak hours, patterns, and predictions
-    """
-    try:
-        from pattern_analyzer import get_pattern_analyzer
-        analyzer = get_pattern_analyzer()
-        
-        focus_score = analyzer.calculate_focus_score()
-        peak_hours = analyzer.get_peak_hours()
-        distraction_patterns = analyzer.detect_distraction_patterns()
-        next_hour_prediction = analyzer.predict_next_hour_focus()
-        daily_stats = analyzer.get_daily_summary_stats()
-        
-        return {
-            'focus_score': focus_score,
-            'peak_hours': peak_hours,
-            'distraction_patterns': distraction_patterns,
-            'next_hour_prediction': next_hour_prediction,
-            'daily_stats': daily_stats
-        }
-    except Exception as e:
-        print(f"Error generating insights: {e}")
-        return {
-            'error': str(e),
-            'focus_score': {'score': 0, 'productivity_percentage': 0, 'distraction_percentage': 0, 'total_activities': 0},
-            'peak_hours': [],
-            'distraction_patterns': {'by_hour': {}, 'by_day': {}},
-            'next_hour_prediction': 'Unknown',
-            'daily_stats': None
-        }
-
 @app.get("/api/recent")
 async def get_recent_activity(limit: int = 50, date: Optional[str] = ""):
     """
