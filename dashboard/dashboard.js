@@ -88,6 +88,7 @@ async function loadRecentActivity() {
 
 // Update pie chart
 function updatePieChart(data) {
+    console.log('Updating pie chart with data:', data);
     const ctx = document.getElementById('pieChart').getContext('2d');
 
     if (pieChart) {
@@ -136,25 +137,35 @@ function updatePieChart(data) {
                             size: 12,
                             family: 'Inter'
                         }
+                    },
+                    onClick: function(e, legendItem, legend) {
+                        console.log('Legend clicked:', legendItem);
+                        const index = legendItem.index;
+                        const chart = legend.chart;
+                        
+                        // Use Chart.js default toggle behavior
+                        chart.toggleDataVisibility(index);
+                        chart.update();
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                    titleColor: '#e4e7f1',
-                    bodyColor: '#e4e7f1',
-                    borderColor: 'rgba(255, 255, 255, 0.1)',
-                    borderWidth: 1,
-                    padding: 12,
-                    displayColors: true,
+                    enabled: true,
                     callbacks: {
-                        label: function (context) {
-                            return `${context.label}: ${context.parsed.toFixed(2)}h`;
+                        label: function(context) {
+                            console.log('Tooltip triggered:', context);
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += context.parsed.toFixed(2) + 'h';
+                            return label;
                         }
                     }
                 }
             }
         }
     });
+    console.log('Pie chart created:', pieChart);
 }
 
 // Update timeline chart
@@ -258,15 +269,15 @@ function updateTimelineChart(data) {
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                    titleColor: '#e4e7f1',
-                    bodyColor: '#e4e7f1',
-                    borderColor: 'rgba(255, 255, 255, 0.1)',
-                    borderWidth: 1,
-                    padding: 12,
+                    enabled: true,
                     callbacks: {
-                        label: function (context) {
-                            return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}m`;
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += context.parsed.y.toFixed(1) + 'm';
+                            return label;
                         }
                     }
                 }
@@ -279,4 +290,8 @@ function updateTimelineChart(data) {
 setInterval(loadDashboard, 60000);
 
 // Initial load
-loadDashboard();
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard loaded');
+    console.log('Chart.js version:', Chart.version);
+    loadDashboard();
+});

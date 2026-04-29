@@ -413,7 +413,13 @@ body::before {
     box-shadow: var(--shadow);
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
-    overflow: hidden;
+    overflow: visible;
+}
+
+.chart-card canvas {
+    position: relative;
+    z-index: 10;
+    pointer-events: auto !important;
 }
 
 .chart-card::before {
